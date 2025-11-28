@@ -4,16 +4,15 @@
 [![License](https://img.shields.io/pypi/l/django-admin-advanced-search)](https://github.com/shifenhutu/django-admin-advanced-search/blob/main/LICENSE)
 [![Python Version](https://img.shields.io/pypi/pyversions/django-admin-advanced-search)](https://pypi.org/project/django-admin-advanced-search/)
 
-Django Admin 界面的高级搜索功能，可直接在搜索栏中实现强大的过滤功能。
+Django Admin 界面的高级搜索功能，可直接在搜索栏中实现强大的文本字段过滤功能。
 
 [English README](README.md)
 
 ## 功能特性
 
-- 增强的 Django Admin 搜索能力，支持高级语法
+- 增强的 Django Admin 搜索能力，支持文本字段的高级语法
 - 支持字段特定搜索和多种操作符
 - 支持大小写敏感和大小写不敏感的匹配选项
-- 支持引号值的精确短语匹配
 - 支持多个条件的AND逻辑组合
 - 与现有 Django Admin 界面无缝集成
 - 数据库级别的过滤实现，性能优化
@@ -24,6 +23,8 @@ Django Admin 界面的高级搜索功能，可直接在搜索栏中实现强大�
 - Django >= 5.1
 
 注意：此包已在 Django 5.1, 5.2 和 Python 3.12 上进行了专门测试。虽然它可能在其他版本上工作，但不保证在此范围之外的版本兼容性。
+
+此包专为文本字段搜索而设计。对于数字和日期/时间字段的过滤，请考虑使用 [django-admin-rangefilter](https://github.com/silentsokolov/django-admin-rangefilter)。
 
 ## 安装
 
@@ -68,7 +69,6 @@ admin.site.register(MyModel, MyModelAdmin)
 | `field:!*suffix` | 大小写敏感后缀匹配 | `name:!*son` | `name LIKE '%son'` |
 | `field:prefix*` | 大小写不敏感前缀匹配 | `name:john*` | `name ILIKE 'john%'` |
 | `field:!prefix*` | 大小写敏感前缀匹配 | `name:!john*` | `name LIKE 'john%'` |
-| `"quoted values"` | 精确短语匹配 | `name:"John Doe"` | `name ILIKE 'John Doe'` |
 
 ## 示例
 

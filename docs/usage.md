@@ -54,7 +54,7 @@ The package supports the following advanced search syntax in the Django Admin se
 | `field:!*suffix` | Case-sensitive ends with | `name:!*son` | Fields ending with "son" (case-sensitive) |
 | `field:prefix*` | Case-insensitive starts with | `name:john*` | Fields starting with "john" (case-insensitive) |
 | `field:!prefix*` | Case-sensitive starts with | `name:!John*` | Fields starting with "John" (case-sensitive) |
-| `"quoted values"` | Exact phrase matching | `name:"John Doe"` | Fields containing the exact phrase "John Doe" |
+
 
 ## Security
 

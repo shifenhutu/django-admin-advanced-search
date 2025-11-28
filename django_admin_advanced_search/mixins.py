@@ -25,7 +25,6 @@ class AdvancedSearchMixin(admin.ModelAdmin):
         - field:!*suffix → case-sensitive endswith
         - field:prefix* → case-insensitive startswith
         - field:!prefix* → case-sensitive startswith
-        - "quoted values" → exact phrase matching
         
         Only fields in search_fields are allowed for security.
         Falls back to default search if parsing fails.

@@ -4,16 +4,15 @@
 [![License](https://img.shields.io/pypi/l/django-admin-advanced-search)](https://github.com/shifenhutu/django-admin-advanced-search/blob/main/LICENSE)
 [![Python Version](https://img.shields.io/pypi/pyversions/django-admin-advanced-search)](https://pypi.org/project/django-admin-advanced-search/)
 
-Advanced search syntax for Django Admin that enables powerful filtering capabilities directly from the search bar.
+Advanced search syntax for Django Admin that enables powerful filtering capabilities for text fields directly from the search bar.
 
 [中文版 说明](README_zh.md)
 
 ## Features
 
-- Enhanced search capabilities in Django Admin with advanced syntax
+- Enhanced search capabilities in Django Admin with advanced syntax for text fields
 - Support for field-specific searches with various operators
 - Case-sensitive and case-insensitive matching options
-- Quoted values support for exact phrase matching
 - Multiple conditions combination with AND logic
 - Seamless integration with existing Django Admin interfaces
 - Performance-conscious implementation with database-level filtering
@@ -24,6 +23,8 @@ Advanced search syntax for Django Admin that enables powerful filtering capabili
 - Django >= 5.1
 
 Note: This package has been tested specifically on Django 5.1, 5.2 with Python 3.12. While it may work on other versions, compatibility is not guaranteed for versions outside this range.
+
+This package is designed specifically for text field searches. For numeric and date/time field filtering, consider using [django-admin-rangefilter](https://github.com/silentsokolov/django-admin-rangefilter).
 
 ## Installation
 
@@ -68,7 +69,6 @@ admin.site.register(MyModel, MyModelAdmin)
 | `field:!*suffix` | Case-sensitive endswith | `name:!*son` | `name LIKE '%son'` |
 | `field:prefix*` | Case-insensitive startswith | `name:john*` | `name ILIKE 'john%'` |
 | `field:!prefix*` | Case-sensitive startswith | `name:!john*` | `name LIKE 'john%'` |
-| `"quoted values"` | Exact phrase matching | `name:"John Doe"` | `name ILIKE 'John Doe'` |
 
 ## Examples
 

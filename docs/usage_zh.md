@@ -54,7 +54,7 @@ admin.site.register(MyModel, MyModelAdmin)
 | `field:!*suffix` | 大小写敏感后缀匹配 | `name:!*son` | 以"son"结尾的字段（大小写敏感） |
 | `field:prefix*` | 大小写不敏感前缀匹配 | `name:john*` | 以"john"开头的字段（大小写不敏感） |
 | `field:!prefix*` | 大小写敏感前缀匹配 | `name:!John*` | 以"John"开头的字段（大小写敏感） |
-| `"quoted values"` | 精确短语匹配 | `name:"John Doe"` | 包含精确短语"John Doe"的字段 |
+
 
 ## 安全性
 
