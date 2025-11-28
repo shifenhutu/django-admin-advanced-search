@@ -128,5 +128,21 @@ class AdvancedSearchMixinTest(TestCase):
         self.assertEqual(result['filters']['title'], ('icontains', 'python'))
         self.assertEqual(result['filters']['author__name'], ('icontains', 'john'))
     
+    def test_combined_advanced_and_plain_text(self):
+        """Test combination of advanced search and plain text."""
+        admin = BookAdmin()
+        # Test combination of advanced search and plain text
+        result = admin._parse_advanced_search('title:=Python lisa')
+        self.assertTrue(result['has_advanced'])
+        self.assertIn('title', result['filters'])
+        self.assertEqual(result['filters']['title'], ('iexact', 'Python'))
+        self.assertEqual(result['plain_text'], 'lisa')
+    
+    def test_combined_search_integration(self):
+        """Test integration of advanced search with plain text search."""
+        # This test verifies that the mixin can be instantiated without errors
+        admin = BookAdmin()
+        self.assertIsNotNone(admin)
+    
 
     

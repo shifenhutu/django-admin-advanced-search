@@ -40,9 +40,15 @@ class AdvancedSearchMixin(admin.ModelAdmin):
             return super().get_search_results(request, queryset, search_term)
 
         if parsed['has_advanced']:
+            # 应用高级搜索过滤器
             qs = queryset
             for field, (lookup, value) in parsed['filters'].items():
                 qs = qs.filter(**{f"{field}__{lookup}": value})
+            
+            # 如果还有普通文本，应用默认搜索逻辑
+            if parsed['plain_text']:
+                return super().get_search_results(request, qs, parsed['plain_text'])
+            
             return qs.distinct(), False
         else:
             return super().get_search_results(request, queryset, parsed['plain_text'])
