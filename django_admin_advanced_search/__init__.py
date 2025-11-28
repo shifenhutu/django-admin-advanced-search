@@ -3,9 +3,8 @@
 This package provides advanced search functionality for Django Admin interface.
 """
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 __author__ = 'shifenhutu'
-__email__ = 'shifenhutu@example.com'
 __license__ = 'MIT'
 
 # Export main mixin
