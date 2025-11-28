@@ -70,6 +70,15 @@ admin.site.register(MyModel, MyModelAdmin)
 | `field:prefix*` | Case-insensitive startswith | `name:john*` | `name ILIKE 'john%'` |
 | `field:!prefix*` | Case-sensitive startswith | `name:!john*` | `name LIKE 'john%'` |
 
+## Combined Search
+
+Advanced search syntax can be combined with plain text search. When both are present, the advanced search filters are applied first, then the plain text search is applied to the filtered results using Django's default search behavior.
+
+Examples:
+- `title:=Python lisa` - Find items with title exactly matching "Python" (case-insensitive) AND containing "lisa" in any search field
+- `lisa title:=Python` - Same as above, order doesn't matter
+- `title:django* tutorial` - Find items with titles starting with "django" (case-insensitive) AND containing "tutorial" in any search field
+
 ## Examples
 
 - `title:django*` - Items with titles starting with "django" (case-insensitive)
@@ -77,6 +86,7 @@ admin.site.register(MyModel, MyModelAdmin)
 - `title:==Learning Python` - Items with the exact title "Learning Python" (case-sensitive)
 - `title:"Python Programming"` - Items with titles containing the exact phrase "Python Programming"
 - `title:python author__name:john` - Items with titles containing "python" AND authors whose names contain "john"
+- `title:=Python lisa` - Items with titles exactly matching "Python" (case-insensitive) AND containing "lisa" in any search field
 
 ## Documentation
 

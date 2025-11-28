@@ -70,6 +70,15 @@ admin.site.register(MyModel, MyModelAdmin)
 | `field:prefix*` | 大小写不敏感前缀匹配 | `name:john*` | `name ILIKE 'john%'` |
 | `field:!prefix*` | 大小写敏感前缀匹配 | `name:!john*` | `name LIKE 'john%'` |
 
+## 组合搜索
+
+高级搜索语法可以与普通文本搜索结合使用。当两者同时存在时，首先应用高级搜索过滤器，然后使用 Django 的默认搜索行为将普通文本搜索应用于过滤后的结果。
+
+示例:
+- `title:=Python lisa` - 查找标题精确匹配 "Python"（大小写不敏感）且在任何搜索字段中包含 "lisa" 的项目
+- `lisa title:=Python` - 与上述相同，顺序无关紧要
+- `title:django* tutorial` - 查找标题以 "django" 开头（大小写不敏感）且在任何搜索字段中包含 "tutorial" 的项目
+
 ## 示例
 
 - `title:django*` - 标题以"django"开头的项目（大小写不敏感）
@@ -77,6 +86,7 @@ admin.site.register(MyModel, MyModelAdmin)
 - `title:==Learning Python` - 标题精确为"Learning Python"的项目（大小写敏感）
 - `title:"Python Programming"` - 标题包含精确短语"Python Programming"的项目
 - `title:python author__name:john` - 标题包含"python"且作者姓名包含"john"的项目
+- `title:=Python lisa` - 标题精确匹配"Python"（大小写不敏感）且在任何搜索字段中包含"lisa"的项目
 
 ## 文档
 
