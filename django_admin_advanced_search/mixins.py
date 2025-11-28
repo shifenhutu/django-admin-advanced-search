@@ -11,6 +11,22 @@ class AdvancedSearchMixin(admin.ModelAdmin):
     
     This mixin extends the default Django Admin search functionality
     with advanced syntax supporting field-specific searches.
+    
+    Supported syntax:
+    - field:value → case-insensitive contains
+    - field:=value → case-insensitive exact
+    - field:==value → case-sensitive exact
+    - field:!value → case-sensitive contains
+    - field:*suffix → case-insensitive endswith
+    - field:!*suffix → case-sensitive endswith
+    - field:prefix* → case-insensitive startswith
+    - field:!prefix* → case-sensitive startswith
+    - field:>value → greater than (for numbers and dates)
+    - field:>=value → greater than or equal (for numbers and dates)
+    - field:<value → less than (for numbers and dates)
+    - field:<=value → less than or equal (for numbers and dates)
+    - field:start..end → range search (for numbers and dates)
+    - "quoted values" → exact phrase matching
     """
 
     def get_search_results(self, request, queryset, search_term):
@@ -30,6 +46,7 @@ class AdvancedSearchMixin(admin.ModelAdmin):
         - field:>=value → greater than or equal (for numbers and dates)
         - field:<value → less than (for numbers and dates)
         - field:<=value → less than or equal (for numbers and dates)
+        - field:start..end → range search (for numbers and dates)
         - "quoted values" → exact phrase matching
         
         Only fields in search_fields are allowed for security.

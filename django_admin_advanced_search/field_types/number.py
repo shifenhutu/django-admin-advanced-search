@@ -16,6 +16,38 @@ class NumberFieldParser(BaseFieldParser):
         """Parse a number value."""
         value = value_str.strip()
         
+        # 处理区间语法 (e.g., 100..200)
+        if '..' in value:
+            parts = value.split('..')
+            if len(parts) == 2:
+                start_val = parts[0].strip()
+                end_val = parts[1].strip()
+                filters = {}
+                
+                # 处理起始值
+                if start_val:
+                    try:
+                        if '.' in start_val or 'e' in start_val.lower():
+                            num_val = float(start_val)
+                        else:
+                            num_val = int(start_val)
+                        filters[f"{field_name}__gte"] = num_val
+                    except (ValueError, TypeError):
+                        raise ValueError(f"Cannot convert '{start_val}' to a number")
+                
+                # 处理结束值
+                if end_val:
+                    try:
+                        if '.' in end_val or 'e' in end_val.lower():
+                            num_val = float(end_val)
+                        else:
+                            num_val = int(end_val)
+                        filters[f"{field_name}__lte"] = num_val
+                    except (ValueError, TypeError):
+                        raise ValueError(f"Cannot convert '{end_val}' to a number")
+                
+                return filters
+        
         # 尝试转换为数字
         try:
             if '.' in value or 'e' in value.lower():

@@ -92,6 +92,30 @@ class ParserTest(TestCase):
         # since we can't convert 'invalid' to a number
         self.assertFalse(result['has_advanced'])
     
+    def test_number_range_parsing(self):
+        """Test parsing of number ranges with .. syntax."""
+        # Test complete range
+        result = self.parser.parse('price:100..200')
+        self.assertTrue(result['has_advanced'])
+        self.assertIn('price__gte', result['filters'])
+        self.assertIn('price__lte', result['filters'])
+        self.assertEqual(result['filters']['price__gte'], 100)
+        self.assertEqual(result['filters']['price__lte'], 200)
+        
+        # Test range with only start value
+        result = self.parser.parse('price:100..')
+        self.assertTrue(result['has_advanced'])
+        self.assertIn('price__gte', result['filters'])
+        self.assertEqual(result['filters']['price__gte'], 100)
+        self.assertNotIn('price__lte', result['filters'])
+        
+        # Test range with only end value
+        result = self.parser.parse('price:..200')
+        self.assertTrue(result['has_advanced'])
+        self.assertIn('price__lte', result['filters'])
+        self.assertEqual(result['filters']['price__lte'], 200)
+        self.assertNotIn('price__gte', result['filters'])
+    
     def test_date_field_parsing(self):
         """Test parsing of date fields with comparison operators."""
         # Test datetime less than with quoted value (because of space)
@@ -111,6 +135,30 @@ class ParserTest(TestCase):
         self.assertTrue(result['has_advanced'])
         self.assertIn('publication_date__exact', result['filters'])
         self.assertEqual(result['filters']['publication_date__exact'], '2023-06-15')
+    
+    def test_date_range_parsing(self):
+        """Test parsing of date ranges with .. syntax."""
+        # Test complete date range
+        result = self.parser.parse('publication_date:2023-01-01..2023-12-31')
+        self.assertTrue(result['has_advanced'])
+        self.assertIn('publication_date__gte', result['filters'])
+        self.assertIn('publication_date__lte', result['filters'])
+        self.assertEqual(result['filters']['publication_date__gte'], '2023-01-01')
+        self.assertEqual(result['filters']['publication_date__lte'], '2023-12-31')
+        
+        # Test date range with only start value
+        result = self.parser.parse('publication_date:2023-01-01..')
+        self.assertTrue(result['has_advanced'])
+        self.assertIn('publication_date__gte', result['filters'])
+        self.assertEqual(result['filters']['publication_date__gte'], '2023-01-01')
+        self.assertNotIn('publication_date__lte', result['filters'])
+        
+        # Test date range with only end value
+        result = self.parser.parse('publication_date:..2023-12-31')
+        self.assertTrue(result['has_advanced'])
+        self.assertIn('publication_date__lte', result['filters'])
+        self.assertEqual(result['filters']['publication_date__lte'], '2023-12-31')
+        self.assertNotIn('publication_date__gte', result['filters'])
     
     def test_related_field_search(self):
         """Test search on related fields."""
@@ -182,6 +230,18 @@ class FieldParserTest(TestCase):
         result = parser.parse('20.5', 'price', '<=')
         self.assertEqual(result, {'price__lte': 20.5})
         
+        # Test range parsing
+        result = parser.parse('100..200', 'price')
+        self.assertEqual(result, {'price__gte': 100, 'price__lte': 200})
+        
+        # Test range with only start value
+        result = parser.parse('100..', 'price')
+        self.assertEqual(result, {'price__gte': 100})
+        
+        # Test range with only end value
+        result = parser.parse('..200', 'price')
+        self.assertEqual(result, {'price__lte': 200})
+        
         # Test invalid number
         with self.assertRaises(ValueError):
             parser.parse('invalid', 'price', '>')
@@ -193,3 +253,15 @@ class FieldParserTest(TestCase):
         # Test basic parsing
         result = parser.parse('2023-12-31', 'created_at', '>=')
         self.assertEqual(result, {'created_at__gte': '2023-12-31'})
+        
+        # Test range parsing
+        result = parser.parse('2023-01-01..2023-12-31', 'publication_date')
+        self.assertEqual(result, {'publication_date__gte': '2023-01-01', 'publication_date__lte': '2023-12-31'})
+        
+        # Test range with only start value
+        result = parser.parse('2023-01-01..', 'publication_date')
+        self.assertEqual(result, {'publication_date__gte': '2023-01-01'})
+        
+        # Test range with only end value
+        result = parser.parse('..2023-12-31', 'publication_date')
+        self.assertEqual(result, {'publication_date__lte': '2023-12-31'})

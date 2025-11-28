@@ -17,6 +17,24 @@ class DateTimeFieldParser(BaseFieldParser):
         """Parse a datetime value."""
         value = value_str.strip()
         
+        # 处理区间语法 (e.g., 2023-01-01..2023-12-31)
+        if '..' in value:
+            parts = value.split('..')
+            if len(parts) == 2:
+                start_val = parts[0].strip()
+                end_val = parts[1].strip()
+                filters = {}
+                
+                # 处理起始值
+                if start_val:
+                    filters[f"{field_name}__gte"] = start_val
+                
+                # 处理结束值
+                if end_val:
+                    filters[f"{field_name}__lte"] = end_val
+                
+                return filters
+        
         # 根据修饰符确定查找类型
         if modifier == '>=':
             lookup, value = 'gte', value
