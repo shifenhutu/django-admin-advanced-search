@@ -4,6 +4,7 @@ SECRET_KEY = 'test-secret-key-for-testing-purposes-only'
 
 INSTALLED_APPS = [
     'django_admin_advanced_search',
+    'tests',
 ]
 
 DATABASES = {

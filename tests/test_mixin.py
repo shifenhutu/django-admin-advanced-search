@@ -6,7 +6,7 @@ from django_admin_advanced_search.mixins import AdvancedSearchMixin
 
 class BookAdmin(AdvancedSearchMixin):
     """Mock admin class for testing."""
-    search_fields = ['title', 'author__name']
+    search_fields = ['title', 'author__name', 'price', 'publication_date']
 
 
 class AdvancedSearchMixinTest(TestCase):
@@ -97,7 +97,7 @@ class AdvancedSearchMixinTest(TestCase):
         """Test search with quoted values."""
         admin = BookAdmin()
         # Test quoted values
-        result = admin._parse_advanced_search('title:\"Python Programming\"')
+        result = admin._parse_advanced_search('title:"Python Programming"')
         self.assertTrue(result['has_advanced'])
         self.assertIn('title', result['filters'])
         self.assertEqual(result['filters']['title'], ('icontains', 'Python Programming'))
@@ -136,6 +136,39 @@ class AdvancedSearchMixinTest(TestCase):
         self.assertEqual(admin._build_filter_keyword('title', 'endswith_case'), 'title__endswith')
         self.assertEqual(admin._build_filter_keyword('title', 'startswith'), 'title__istartswith')
         self.assertEqual(admin._build_filter_keyword('title', 'startswith_case'), 'title__startswith')
+        # Test comparison operators
+        self.assertEqual(admin._build_filter_keyword('price', 'gt'), 'price__gt')
+        self.assertEqual(admin._build_filter_keyword('price', 'gte'), 'price__gte')
+        self.assertEqual(admin._build_filter_keyword('price', 'lt'), 'price__lt')
+        self.assertEqual(admin._build_filter_keyword('price', 'lte'), 'price__lte')
         
         # Test invalid operator
         self.assertIsNone(admin._build_filter_keyword('title', 'invalid'))
+    
+    def test_comparison_operators_with_strings(self):
+        """Test that comparison operators work with string fields when field type detection fails."""
+        admin = BookAdmin()
+        # Test field:>value with string field (fallback behavior)
+        result = admin._parse_advanced_search('title:>python')
+        self.assertTrue(result['has_advanced'])
+        self.assertIn('title', result['filters'])
+        # When field type detection fails, it falls back to string handling
+        self.assertEqual(result['filters']['title'], ('icontains', 'python'))
+        
+        # Test field:>=value with string field (fallback behavior)
+        result = admin._parse_advanced_search('title:>=python')
+        self.assertTrue(result['has_advanced'])
+        self.assertIn('title', result['filters'])
+        self.assertEqual(result['filters']['title'], ('icontains', 'python'))
+        
+        # Test field:<value with string field (fallback behavior)
+        result = admin._parse_advanced_search('title:<python')
+        self.assertTrue(result['has_advanced'])
+        self.assertIn('title', result['filters'])
+        self.assertEqual(result['filters']['title'], ('icontains', 'python'))
+        
+        # Test field:<=value with string field (fallback behavior)
+        result = admin._parse_advanced_search('title:<=python')
+        self.assertTrue(result['has_advanced'])
+        self.assertIn('title', result['filters'])
+        self.assertEqual(result['filters']['title'], ('icontains', 'python'))

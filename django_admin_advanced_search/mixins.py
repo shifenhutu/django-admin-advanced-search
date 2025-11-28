@@ -1,11 +1,11 @@
 """Advanced search functionality for Django Admin."""
 
 import re
+from datetime import datetime
 from django.contrib import admin
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-# 123 test
 
 class AdvancedSearchMixin:
     """Mixin to add advanced search functionality to Django Admin.
@@ -27,6 +27,10 @@ class AdvancedSearchMixin:
         - field:!*suffix → case-sensitive endswith
         - field:prefix* → case-insensitive startswith
         - field:!prefix* → case-sensitive startswith
+        - field:>value → greater than (for numbers and dates)
+        - field:>=value → greater than or equal (for numbers and dates)
+        - field:<value → less than (for numbers and dates)
+        - field:<=value → less than or equal (for numbers and dates)
         - "quoted values" → exact phrase matching
         
         Only fields in search_fields are allowed for security.
@@ -45,10 +49,63 @@ class AdvancedSearchMixin:
         if parsed['has_advanced']:
             qs = queryset
             for field, (lookup, value) in parsed['filters'].items():
+                # Try to convert value to appropriate type based on field type
+                converted_value = self._convert_value_for_field(field, value)
+                if converted_value is not None:
+                    value = converted_value
+                
                 qs = qs.filter(**{f"{field}__{lookup}": value})
             return qs.distinct(), False
         else:
             return super().get_search_results(request, queryset, parsed['plain_text'])
+    
+    def _convert_value_for_field(self, field_name, value):
+        """Convert value to appropriate type based on field type."""
+        # Get the model from the admin class
+        if not hasattr(self, 'model') or not self.model:
+            return None
+            
+        try:
+            # Handle related fields (e.g., author__name)
+            if '__' in field_name:
+                parts = field_name.split('__')
+                model = self.model
+                for part in parts[:-1]:
+                    field = model._meta.get_field(part)
+                    if hasattr(field, 'related_model'):
+                        model = field.related_model
+                    else:
+                        return None
+                field_name = parts[-1]
+                
+            # Get the actual field
+            field = model._meta.get_field(field_name)
+            
+            # Convert based on field type
+            if isinstance(field, (models.IntegerField, models.BigIntegerField, models.SmallIntegerField)):
+                return int(value)
+            elif isinstance(field, (models.FloatField, models.DecimalField)):
+                return float(value)
+            elif isinstance(field, (models.DateField, models.DateTimeField)):
+                # Try to parse date/datetime
+                # Handle common date formats
+                for fmt in ('%Y-%m-%d', '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f'):
+                    try:
+                        if isinstance(field, models.DateTimeField):
+                            return datetime.strptime(value, fmt)
+                        else:
+                            # For DateField, we only need the date part
+                            dt = datetime.strptime(value, fmt)
+                            return dt.date()
+                    except ValueError:
+                        continue
+                # If no format matched, return as is
+                return value
+            else:
+                return None
+        except:
+            # If conversion fails, return None to use original value
+            return None
     
     def _parse_advanced_search(self, text):
         """Parse search terms using advanced syntax."""
@@ -57,8 +114,8 @@ class AdvancedSearchMixin:
             return {'has_advanced': False, 'filters': {}, 'plain_text': text}
 
         # 正则表达式匹配 field:modifier"value" 或 field:modifier value
-        # Groups: 1=field, 2=modifier(==|=|!), 4=quoted_value, 5=unquoted_value
-        pattern = r'(\S+?):((?:==|[=!])?)("([^"]*)"|(\S+))'
+        # Groups: 1=field, 2=modifier(==|=|!|>=|<=|>|<), 4=quoted_value, 5=unquoted_value
+        pattern = r'(\S+?):((?:==|>=|<=|[=!<>])?)((\"([^\"]*)\")|(\S+))'
         filters = {}
         plain_parts = []
         last_end = 0
@@ -66,9 +123,9 @@ class AdvancedSearchMixin:
         for match in re.finditer(pattern, text):
             field = match.group(1)
             modifier = match.group(2) or ''
-            quoted_val = match.group(4)
-            unquoted_val = match.group(5)
-            raw_value = quoted_val or unquoted_val
+            quoted_val = match.group(5)  # Group 5 is quoted value
+            unquoted_val = match.group(6)  # Group 6 is unquoted value
+            raw_value = quoted_val if quoted_val is not None else unquoted_val
             start, end = match.span()
 
             # 只处理允许的字段
@@ -76,31 +133,79 @@ class AdvancedSearchMixin:
                 plain_parts.append(match.group(0))
                 continue
 
-            # 根据修饰符确定查找类型
-            if modifier == '==':
-                lookup, value = 'exact', raw_value
-            elif modifier == '=':
-                lookup, value = 'iexact', raw_value
-            elif modifier == '!':
-                value = raw_value
-                if value.startswith('*') and value.endswith('*'):
-                    lookup, value = 'contains', value[1:-1]
-                elif value.startswith('*'):
-                    lookup, value = 'endswith', value[1:]
-                elif value.endswith('*'):
-                    lookup, value = 'startswith', value[:-1]
+            # 根据字段类型确定如何处理
+            field_type = self._get_field_type(field)
+            
+            # 根据修饰符和字段类型确定查找类型
+            if field_type == 'number':
+                # 处理数字字段
+                try:
+                    # 尝试转换为数字
+                    if '.' in raw_value or 'e' in raw_value.lower():
+                        num_val = float(raw_value)
+                    else:
+                        num_val = int(raw_value)
+                    
+                    if modifier == '>=':
+                        lookup, value = 'gte', num_val
+                    elif modifier == '>':
+                        lookup, value = 'gt', num_val
+                    elif modifier == '<=':
+                        lookup, value = 'lte', num_val
+                    elif modifier == '<':
+                        lookup, value = 'lt', num_val
+                    elif modifier in ('=', '==', ''):
+                        lookup, value = 'exact', num_val
+                    else:
+                        # 对于数字字段，忽略通配符等不适用的修饰符
+                        continue
+                except (ValueError, TypeError):
+                    # 如果无法转换为数字，跳过这个条件
+                    plain_parts.append(match.group(0))
+                    continue
+                    
+            elif field_type in ('date', 'datetime'):
+                # 处理日期/时间字段
+                # 对于日期字段，我们直接使用值，让Django处理转换
+                if modifier == '>=':
+                    lookup, value = 'gte', raw_value
+                elif modifier == '>':
+                    lookup, value = 'gt', raw_value
+                elif modifier == '<=':
+                    lookup, value = 'lte', raw_value
+                elif modifier == '<':
+                    lookup, value = 'lt', raw_value
+                elif modifier in ('=', '==', ''):
+                    lookup, value = 'exact', raw_value
                 else:
-                    lookup = 'contains'
+                    # 对于日期字段，忽略通配符等不适用的修饰符
+                    continue
             else:
-                value = raw_value
-                if value.startswith('*') and value.endswith('*'):
-                    lookup, value = 'icontains', value[1:-1]
-                elif value.startswith('*'):
-                    lookup, value = 'iendswith', value[1:]
-                elif value.endswith('*'):
-                    lookup, value = 'istartswith', value[:-1]
+                # 处理字符串字段
+                if modifier == '==':
+                    lookup, value = 'exact', raw_value
+                elif modifier == '=':
+                    lookup, value = 'iexact', raw_value
+                elif modifier == '!':
+                    value = raw_value
+                    if value.startswith('*') and value.endswith('*'):
+                        lookup, value = 'contains', value[1:-1]
+                    elif value.startswith('*'):
+                        lookup, value = 'endswith', value[1:]
+                    elif value.endswith('*'):
+                        lookup, value = 'startswith', value[:-1]
+                    else:
+                        lookup = 'contains'
                 else:
-                    lookup = 'icontains'
+                    value = raw_value
+                    if value.startswith('*') and value.endswith('*'):
+                        lookup, value = 'icontains', value[1:-1]
+                    elif value.startswith('*'):
+                        lookup, value = 'iendswith', value[1:]
+                    elif value.endswith('*'):
+                        lookup, value = 'istartswith', value[:-1]
+                    else:
+                        lookup = 'icontains'
 
             filters[field] = (lookup, value)
             # 添加匹配之前的普通文本
@@ -116,6 +221,33 @@ class AdvancedSearchMixin:
             'filters': filters,
             'plain_text': plain_text,
         }
+    
+    def _get_field_type(self, field_path):
+        """Determine field type: 'str', 'number', 'date', 'datetime'."""
+        try:
+            parts = field_path.split("__")
+            model = self.model
+            for part in parts[:-1]:
+                rel = model._meta.get_field(part)
+                if hasattr(rel, "related_model"):
+                    model = rel.related_model
+                else:
+                    return "str"
+            final_field = model._meta.get_field(parts[-1])
+
+            if isinstance(final_field, models.DateTimeField):
+                return "datetime"
+            elif isinstance(final_field, models.DateField):
+                return "date"
+            elif isinstance(
+                final_field,
+                (models.IntegerField, models.FloatField, models.DecimalField),
+            ):
+                return "number"
+            else:
+                return "str"
+        except (Exception, AttributeError):
+            return "str"
     
     def _is_field_allowed(self, field_name):
         """Check if a field is in search_fields."""
@@ -164,6 +296,10 @@ class AdvancedSearchMixin:
             'endswith_case': 'endswith',
             'startswith': 'istartswith',
             'startswith_case': 'startswith',
+            'gt': 'gt',
+            'gte': 'gte',
+            'lt': 'lt',
+            'lte': 'lte',
         }
         
         if operator in operator_map:

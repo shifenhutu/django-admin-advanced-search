@@ -17,13 +17,16 @@ Advanced search syntax for Django Admin that enables powerful filtering capabili
 - Multiple conditions combination with AND logic
 - Seamless integration with existing Django Admin interfaces
 - Performance-conscious implementation with database-level filtering
+- Automatic field type detection (string, number, date, datetime)
+- Type-specific parsing rules for appropriate operators
+- Support for comparison operators on number and date fields
 
 ## Requirements
 
 - Python >= 3.12
 - Django >= 5.1
 
-Note: This package has been tested specifically on Django 5.1, 5.2 with Python 3.12. While it may work on other versions, compatibility is not guaranteed for versions outside this range.
+Note: This package has been tested specifically on Django 5.1, 5.2 with Python 3.12, 3.13, 3.14. While it may work on other versions, compatibility is not guaranteed for versions outside this range.
 
 ## Installation
 
@@ -68,6 +71,11 @@ admin.site.register(MyModel, MyModelAdmin)
 | `field:!*suffix` | Case-sensitive endswith | `name:!*son` | `name LIKE '%son'` |
 | `field:prefix*` | Case-insensitive startswith | `name:john*` | `name ILIKE 'john%'` |
 | `field:!prefix*` | Case-sensitive startswith | `name:!john*` | `name LIKE 'john%'` |
+| `field:>value` | Greater than (numbers/dates) | `price:>100` | `price > 100` |
+| `field:>=value` | Greater than or equal (numbers/dates) | `date:>=2023-01-01` | `date >= '2023-01-01'` |
+| `field:<value` | Less than (numbers/dates) | `price:<1000` | `price < 1000` |
+| `field:<=value` | Less than or equal (numbers/dates) | `date:<=2023-12-31` | `date <= '2023-12-31'` |
+| `field:"quoted value"` | Values with spaces (dates/times) | `created_at:<"2023-12-31 23:59:59"` | `created_at < '2023-12-31 23:59:59'` |
 | `"quoted values"` | Exact phrase matching | `name:"John Doe"` | `name ILIKE 'John Doe'` |
 
 ## Examples
@@ -77,6 +85,9 @@ admin.site.register(MyModel, MyModelAdmin)
 - `title:==Learning Python` - Items with the exact title "Learning Python" (case-sensitive)
 - `title:"Python Programming"` - Items with titles containing the exact phrase "Python Programming"
 - `title:python author__name:john` - Items with titles containing "python" AND authors whose names contain "john"
+- `price:>29.99` - Items with price greater than 29.99
+- `publication_date:>=2023-01-01` - Items published on or after January 1, 2023
+- `created_at:<"2023-12-31 23:59:59"` - Items created before December 31, 2023 11:59:59 PM (note the quotes around the datetime value with spaces)
 
 ## Documentation
 
@@ -90,6 +101,8 @@ admin.site.register(MyModel, MyModelAdmin)
 - Make sure your database columns have appropriate collation settings for optimal performance
 - Complex searches with multiple fields may generate complex SQL queries; consider adding database indexes on frequently searched fields
 - When using related field lookups (e.g., `author__name:john`), ensure foreign key relationships are properly indexed
+- For number and date fields, the package automatically detects field types and applies appropriate comparison operators
+- DateTime values containing spaces must be quoted to be parsed correctly (e.g., `created_at:<"2023-12-31 23:59:59"`)
 
 ## Contributing
 
