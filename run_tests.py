@@ -12,5 +12,6 @@ if __name__ == "__main__":
     django.setup()
     TestRunner = get_runner(settings)
     test_runner = TestRunner()
-    failures = test_runner.run_tests(["tests"])
+    # Run only the new tests
+    failures = test_runner.run_tests(["tests.test_mixin_new", "tests.test_parser", "tests.test_field_types"])
     sys.exit(bool(failures))

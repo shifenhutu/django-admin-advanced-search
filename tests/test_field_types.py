@@ -1,73 +1,74 @@
 """Tests for field type detection in AdvancedSearchMixin."""
 
 from django.test import TestCase
-from django_admin_advanced_search.mixins import AdvancedSearchMixin
+from django_admin_advanced_search.field_types.string import StringFieldParser
+from django_admin_advanced_search.field_types.number import NumberFieldParser
+from django_admin_advanced_search.field_types.datetime import DateTimeFieldParser
 from tests.models import Book
-
-
-class BookAdminWithModel(AdvancedSearchMixin):
-    """Mock admin class with model for testing field type detection."""
-    model = Book
-    search_fields = ['title', 'author__name', 'price', 'publication_date', 'created_at']
 
 
 class FieldTypesTest(TestCase):
     """Test cases for field type detection."""
     
-    def test_get_field_type(self):
-        """Test field type detection."""
-        admin = BookAdminWithModel()
+    def test_field_parser_support(self):
+        """Test that field parsers correctly identify supported fields."""
+        # Test string field parser
+        from django.db import models
+        string_field = models.CharField(max_length=100)
+        self.assertTrue(StringFieldParser.supports(string_field))
         
-        # Test string field
-        self.assertEqual(admin._get_field_type('title'), 'str')
+        # Test number field parser
+        int_field = models.IntegerField()
+        float_field = models.FloatField()
+        self.assertTrue(NumberFieldParser.supports(int_field))
+        self.assertTrue(NumberFieldParser.supports(float_field))
         
-        # Test related string field
-        self.assertEqual(admin._get_field_type('author__name'), 'str')
+        # Test datetime field parser
+        date_field = models.DateField()
+        datetime_field = models.DateTimeField()
+        self.assertTrue(DateTimeFieldParser.supports(date_field))
+        self.assertTrue(DateTimeFieldParser.supports(datetime_field))
+    
+    def test_string_field_parsing(self):
+        """Test parsing of string fields with various operators."""
+        parser = StringFieldParser()
         
-        # Test number field
-        self.assertEqual(admin._get_field_type('price'), 'number')
+        # Test case-insensitive contains (default)
+        result = parser.parse('python', 'title')
+        self.assertEqual(result, {'title__icontains': 'python'})
         
-        # Test date field
-        self.assertEqual(admin._get_field_type('publication_date'), 'date')
+        # Test case-insensitive exact
+        result = parser.parse('python', 'title', '=')
+        self.assertEqual(result, {'title__iexact': 'python'})
         
-        # Test datetime field
-        self.assertEqual(admin._get_field_type('created_at'), 'datetime')
-
+        # Test case-sensitive exact
+        result = parser.parse('Python', 'title', '==')
+        self.assertEqual(result, {'title__exact': 'Python'})
+    
     def test_number_field_parsing(self):
         """Test parsing of number fields with comparison operators."""
-        admin = BookAdminWithModel()
+        parser = NumberFieldParser()
         
         # Test greater than
-        result = admin._parse_advanced_search('price:>10')
-        self.assertTrue(result['has_advanced'])
-        self.assertIn('price', result['filters'])
-        self.assertEqual(result['filters']['price'], ('gt', 10))
+        result = parser.parse('10', 'price', '>')
+        self.assertEqual(result, {'price__gt': 10})
         
         # Test less than or equal
-        result = admin._parse_advanced_search('price:<=20.50')
-        self.assertTrue(result['has_advanced'])
-        self.assertIn('price', result['filters'])
-        self.assertEqual(result['filters']['price'], ('lte', 20.5))
+        result = parser.parse('20.50', 'price', '<=')
+        self.assertEqual(result, {'price__lte': 20.5})
         
-        # Test invalid number (should fallback to plain text)
-        result = admin._parse_advanced_search('price:>invalid')
-        self.assertFalse(result['has_advanced'])
-
-    def test_date_field_parsing(self):
+        # Test invalid number (should raise ValueError)
+        with self.assertRaises(ValueError):
+            parser.parse('invalid', 'price', '>')
+    
+    def test_datetime_field_parsing(self):
         """Test parsing of date fields with comparison operators."""
-        admin = BookAdminWithModel()
+        parser = DateTimeFieldParser()
         
-        # Test date greater than with quoted value (because of space)
-        result = admin._parse_advanced_search('created_at:<"2023-12-31 23:59:59"')
-        self.assertTrue(result['has_advanced'])
-        self.assertIn('created_at', result['filters'])
+        # Test datetime less than
+        result = parser.parse('2023-12-31 23:59:59', 'created_at', '<')
+        self.assertEqual(result, {'created_at__lt': '2023-12-31 23:59:59'})
         
-        # Test date equality with quoted value
-        result = admin._parse_advanced_search('publication_date:"2023-06-15"')
-        self.assertTrue(result['has_advanced'])
-        self.assertIn('publication_date', result['filters'])
-        
-        # Test date with unquoted value (without spaces)
-        result = admin._parse_advanced_search('publication_date:2023-06-15')
-        self.assertTrue(result['has_advanced'])
-        self.assertIn('publication_date', result['filters'])
+        # Test date equality
+        result = parser.parse('2023-06-15', 'publication_date', '=')
+        self.assertEqual(result, {'publication_date__exact': '2023-06-15'})
