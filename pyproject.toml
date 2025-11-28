@@ -39,3 +39,9 @@ include = ["django_admin_advanced_search*"]
 
 [tool.setuptools.package-data]
 django_admin_advanced_search = ["py.typed"]
+
+[dependency-groups]
+dev = [
+    "build>=1.3.0",
+    "twine>=6.2.0",
+]
