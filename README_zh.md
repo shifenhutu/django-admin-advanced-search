@@ -88,10 +88,7 @@ admin.site.register(MyModel, MyModelAdmin)
 - `title:python author__name:john` - 标题包含"python"且作者姓名包含"john"的项目
 - `title:=Python lisa` - 标题精确匹配"Python"（大小写不敏感）且在任何搜索字段中包含"lisa"的项目
 
-## 文档
 
-- [使用指南 (中文)](docs/usage_zh.md) | [Usage Guide (English)](docs/usage.md)
-- [测试指南 (中文)](docs/testing_zh.md) | [Testing Guide (English)](docs/testing.md)
 
 ## 数据库排序和性能说明
 
@@ -100,6 +97,15 @@ admin.site.register(MyModel, MyModelAdmin)
 - 确保数据库列具有适当的排序规则设置以获得最佳性能
 - 复杂的多字段搜索可能会生成复杂的 SQL 查询；考虑在经常搜索的字段上添加数据库索引
 - 使用相关字段查找时（例如 `author__name:john`），确保外键关系正确建立索引
+
+## 测试
+
+
+该包使用Django内置的测试框架。运行测试的方法：
+
+```bash
+python -m django test tests --settings=tests.settings
+```
 
 ## 贡献
 

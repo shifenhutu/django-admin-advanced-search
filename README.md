@@ -88,10 +88,14 @@ Examples:
 - `title:python author__name:john` - Items with titles containing "python" AND authors whose names contain "john"
 - `title:=Python lisa` - Items with titles exactly matching "Python" (case-insensitive) AND containing "lisa" in any search field
 
-## Documentation
 
-- [Usage Guide (English)](docs/usage.md) | [使用指南 (中文)](docs/usage_zh.md)
-- [Testing Guide (English)](docs/testing.md) | [测试指南 (中文)](docs/testing_zh.md)
+## Testing
+
+This package uses Django's built-in testing framework. To run the tests:
+
+```bash
+python -m django test tests --settings=tests.settings
+```
 
 ## Database Collation and Performance Notes
 
