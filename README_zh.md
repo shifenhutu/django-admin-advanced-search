@@ -8,6 +8,14 @@ Django Admin 界面的高级搜索功能，可直接在搜索栏中实现强大�
 
 [English README](README.md)
 
+
+# 使用方式
+
+在 django admin 的搜索框 输入 搜索语法
+
+![demo.png](demo.png)
+
+
 ## 功能特性
 
 - 增强的 Django Admin 搜索能力，支持文本字段的高级语法

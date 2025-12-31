@@ -8,6 +8,12 @@ Advanced search syntax for Django Admin that enables powerful filtering capabili
 
 [中文版 说明](https://github.com/shifenhutu/django-admin-advanced-search/blob/main/README_zh.md)
 
+# usage
+
+enter your search to the input in django admin list page 
+
+![demo.png](demo.png)
+
 ## Features
 
 - Enhanced search capabilities in Django Admin with advanced syntax for text fields
