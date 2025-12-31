@@ -6,7 +6,7 @@
 
 Advanced search syntax for Django Admin that enables powerful filtering capabilities for text fields directly from the search bar.
 
-[中文版 说明](README_zh.md)
+[中文版 说明](https://github.com/shifenhutu/django-admin-advanced-search/blob/main/README_zh.md)
 
 ## Features
 
